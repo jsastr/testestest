@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTTiers — Stat Rankings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b24;--surface-alt:#1c2333;--card:#182030;
+  --text:#e8f0fe;--muted:#6b8aaa;--border:rgba(100,140,200,0.1);--border-h:rgba(80,200,160,0.3);
+  --mint:#2dd4a0;--mint-s:rgba(45,212,160,0.12);--mint-d:#0fa070;
+  --purple:#9d7fea;--purple-s:rgba(157,127,234,0.12);
+  --gold:#f0b429;--gold-s:rgba(240,180,41,0.15);
+  --silver:#8fa3b8;--silver-s:rgba(143,163,184,0.15);
+  --bronze:#e8763a;--bronze-s:rgba(232,118,58,0.15);
+  --tf-bg:rgba(239,68,68,.15);    --tf-c:#fca5a5;
+  --td-bg:rgba(249,115,22,.15);   --td-c:#fdba74;
+  --tc-bg:rgba(234,179,8,.15);    --tc-c:#fde047;
+  --tb-bg:rgba(59,130,246,.15);   --tb-c:#93c5fd;
+  --ta-bg:rgba(45,212,160,.15);   --ta-c:#6ee7b7;
+  --ts-bg:rgba(251,191,36,.18);   --ts-c:#fcd34d;
+  --tss-bg:rgba(157,127,234,.2);  --tss-c:#c4b5fd;
+  --tz-bg:rgba(236,72,153,.22);   --tz-c:#f9a8d4;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scrollbar-gutter:stable;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ══ AURORA THEME ══ */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-2;
+  background-color:#0d1117;
+  background-image:
+    linear-gradient(120deg, rgba(157,127,234,.20) 0%, transparent 42%),
+    linear-gradient(210deg, rgba(99,102,241,.16) 8%, transparent 48%),
+    linear-gradient(55deg, rgba(45,212,160,.14) 12%, transparent 50%),
+    linear-gradient(300deg, rgba(236,72,153,.08) 5%, transparent 40%);
+  background-size:200% 200%;
+  background-repeat:no-repeat;
+  animation: auroraFlow 26s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@keyframes auroraFlow{
+  0%{background-position:0% 15%, 100% 0%, 15% 100%, 90% 90%;}
+  33%{background-position:55% 65%, 35% 75%, 65% 15%, 20% 30%;}
+  66%{background-position:90% 10%, 10% 90%, 90% 60%, 60% 0%;}
+  100%{background-position:100% 100%, 0% 100%, 100% 30%, 0% 100%;}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .banner,.page{animation:none;opacity:1;}
+  body::before{animation:none;}
+  #mouse-glow{display:none;}
+}
+
+.page{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:0 0 60px;opacity:0;animation:pageFadeIn .7s ease .08s forwards;}
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ══ BANNER ══ */
+.banner{
+  position:relative;
+  background:linear-gradient(135deg,#0a1628 0%,#0f1e35 40%,#0a1e28 70%,#081620 100%);
+  border-bottom:1px solid rgba(45,212,160,.15);
+  overflow:hidden;
+  padding:0 24px;
+  opacity:0;animation:pageFadeIn .7s ease forwards;
+}
+.banner::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    -55deg,
+    transparent,transparent 40px,
+    rgba(45,212,160,.015) 40px,rgba(45,212,160,.015) 41px
+  );
+  pointer-events:none;
+}
+.banner::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(45,212,160,.4),transparent);
+}
+
+.banner-inner{
+  max-width:1320px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;gap:12px;flex-wrap:wrap;
+}
+
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{
+  width:42px;height:42px;border-radius:13px;
+  background:linear-gradient(135deg,var(--mint),#059669);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;color:#fff;
+  box-shadow:0 0 20px rgba(45,212,160,.3);
+}
+.brand-name{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.02em;color:#fff;}
+.brand-sub{font-size:.7rem;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:1px;}
+
+.banner-nav{display:flex;align-items:center;gap:6px;}
+.nav-link{
+  color:var(--muted);text-decoration:none;font-size:.82rem;font-weight:700;
+  padding:7px 16px;border-radius:8px;border:1px solid transparent;
+  transition:all .18s;display:flex;align-items:center;gap:6px;
+  font-family:'Nunito',sans-serif;
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,.06);border-color:var(--border);}
+.nav-link.active{color:#fff;background:rgba(45,212,160,.12);border-color:rgba(45,212,160,.3);}
+.nav-link svg{width:14px;height:14px;fill:currentColor;opacity:.7;}
+
+.mode-btn{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  border-radius:8px;border:1px solid rgba(45,212,160,.3);
+  background:rgba(45,212,160,.08);color:var(--text);
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;
+  transition:all .18s;
+}
+.mode-btn:hover{background:rgba(45,212,160,.15);border-color:rgba(45,212,160,.5);}
+.mode-btn svg{width:14px;height:14px;fill:var(--mint);}
+.mode-chip{
+  font-size:.7rem;font-weight:800;color:var(--mint);
+  background:rgba(45,212,160,.15);padding:2px 8px;
+  border-radius:5px;border:1px solid rgba(45,212,160,.25);
+}
+
+/* ── HERO ── */
+.hero{
+  text-align:center;padding:36px 24px 28px;
+  background:linear-gradient(180deg,rgba(157,127,234,.04) 0%,transparent 100%);
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;justify-content:center;gap:3px;
+  font-size:.72rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;
+  background:rgba(157,127,234,.12);border:1px solid rgba(157,127,234,.35);color:var(--purple);
+  margin:0 auto 6px auto;box-shadow:0 0 10px rgba(157,127,234,.4);
+}
+.hero h1{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;
+  letter-spacing:.02em;line-height:1;color:#fff;
+}
+.hero h1 em{font-style:normal;color:var(--purple);}
+.hero-sub{margin:10px auto 0;max-width:480px;color:var(--muted);font-size:.88rem;line-height:1.7;}
+
+/* ── STAT TABS ── */
+.stat-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 24px 20px;}
+.stat-tab{
+  display:flex;align-items:center;gap:8px;padding:9px 18px;
+  border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  cursor:pointer;font-size:.82rem;font-weight:700;color:var(--muted);
+  transition:all .2s;font-family:'Nunito',sans-serif;
+}
+.stat-tab:hover{border-color:var(--border-h);color:var(--text);background:var(--surface-alt);}
+.stat-tab.active{color:#fff;background:var(--mint-s);border-color:rgba(45,212,160,.35);color:var(--mint);}
+.tab-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+
+/* ── STATS GRID ── */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;
+  padding:0 24px;
+}
+
+/* Each stat column looks like a leaderboard table */
+.stat-col{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;display:none;
+}
+.stat-col.visible{display:block;}
+
+.col-header{
+  padding:12px 16px;
+  background:rgba(255,255,255,.03);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.col-icon{
+  width:32px;height:32px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;flex-shrink:0;
+  font-family:'JetBrains Mono',monospace;
+}
+.col-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.02em;}
+.col-sub{font-size:.65rem;color:var(--muted);margin-top:1px;font-weight:600;}
+
+/* column sub-header row — mirrors lb-header */
+.col-subheader{
+  display:grid;
+  grid-template-columns:46px 1fr 60px 60px;
+  gap:2px;
+  padding:8px 16px;
+  background:rgba(255,255,255,.02);
+  border-bottom:1px solid var(--border);
+  font-size:.58rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--muted);
+}
+.col-subheader div{display:flex;align-items:center;}
+.col-subheader div:not(:nth-child(2)){justify-content:center;}
+
+.col-list{list-style:none;padding:0;margin:0;}
+
+/* Each stat row mirrors player-item */
+.col-row{
+  display:grid;
+  grid-template-columns:46px 1fr 60px 60px;
+  gap:2px;align-items:center;
+  padding:12px 16px;
+  min-height:70px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  cursor:pointer;transition:background .15s;position:relative;
+}
+.col-row:last-child{border-bottom:none;}
+.col-row:hover{background:rgba(45,212,160,.04);}
+.col-row:hover::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--mint);border-radius:0 2px 2px 0;
+}
+
+/* rank badge */
+.col-rank{
+  display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:9px;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;
+  background:rgba(255,255,255,.05);color:var(--muted);
+}
+.col-rank.rank-1{background:var(--gold-s);color:var(--gold);}
+.col-rank.rank-2{background:var(--silver-s);color:var(--silver);}
+.col-rank.rank-3{background:var(--bronze-s);color:var(--bronze);}
+
+/* player info cell */
+.col-info{display:flex;align-items:center;gap:10px;min-width:0;}
+.col-avatar{width:36px;height:36px;border-radius:50%;border:2px solid rgba(157,127,234,.35);background:var(--surface-alt);object-fit:cover;flex-shrink:0;opacity:0;transition:opacity .3s,box-shadow .2s;box-shadow:0 0 0 1px rgba(255,255,255,.05),0 2px 8px rgba(0,0,0,.3);}
+.col-row.rank-1 .col-avatar{border-color:var(--gold);box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 12px var(--gold-s);}
+.col-row.rank-2 .col-avatar{border-color:var(--silver);box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 12px var(--silver-s);}
+.col-row.rank-3 .col-avatar{border-color:var(--bronze);box-shadow:0 0 0 1px rgba(255,255,255,.06),0 0 12px var(--bronze-s);}
+.col-text{min-width:0;flex:1;}
+.col-name{font-weight:700;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;display:flex;align-items:center;gap:4px;}
+.col-display{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+
+/* crown icon for top-3 per stat column */
+.crown-icon{display:inline-flex;align-items:center;flex-shrink:0;filter:drop-shadow(0 0 4px currentColor);}
+.crown-icon svg{width:12px;height:12px;display:block;}
+.crown-1{color:var(--gold);}
+.crown-2{color:var(--silver);}
+.crown-3{color:var(--bronze);}
+
+/* score cell */
+.col-score-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.score-num{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:var(--text);}
+
+.tier-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:.58rem;font-weight:800;padding:2px 5px;
+  border-radius:4px;letter-spacing:.04em;min-width:20px;
+  font-family:'JetBrains Mono',monospace;
+}
+.tier-f  {background:var(--tf-bg); color:var(--tf-c);}
+.tier-d  {background:var(--td-bg); color:var(--td-c);}
+.tier-c  {background:var(--tc-bg); color:var(--tc-c);}
+.tier-b  {background:var(--tb-bg); color:var(--tb-c);}
+.tier-a  {background:var(--ta-bg); color:var(--ta-c);}
+.tier-s  {background:var(--ts-bg); color:var(--ts-c);}
+.tier-ss {background:var(--tss-bg);color:var(--tss-c);}
+.tier-z  {background:var(--tz-bg); color:var(--tz-c);}
+
+/* skeleton */
+.skeleton-row{height:70px;background:linear-gradient(90deg,var(--surface-alt) 25%,var(--card) 50%,var(--surface-alt) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-bottom:1px solid rgba(255,255,255,.04);}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ══ OVERLAYS ══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+@keyframes popIn{from{opacity:0;transform:scale(.88) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* Mode popup */
+.mode-popup{
+  background:var(--surface);border:1px solid rgba(45,212,160,.2);
+  border-radius:18px;padding:28px 24px 24px;
+  max-width:440px;width:100%;max-height:88vh;overflow-y:auto;
+  animation:popIn .26s cubic-bezier(.34,1.56,.64,1);
+}
+.mode-popup-title{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:4px;letter-spacing:.02em;}
+.mode-popup-sub{font-size:.82rem;color:var(--muted);margin-bottom:22px;line-height:1.5;}
+.mode-options{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+.mode-option{
+  display:flex;align-items:center;gap:14px;padding:13px 16px;
+  border-radius:12px;border:1px solid var(--border);background:var(--card);
+  cursor:pointer;transition:all .18s;text-align:left;width:100%;
+  font-family:'Nunito',sans-serif;color:var(--text);
+}
+.mode-option:hover{border-color:var(--border-h);background:var(--surface-alt);}
+.mode-option.selected{border-color:rgba(45,212,160,.4);background:var(--mint-s);}
+.mode-option-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.mode-option-text strong{display:block;font-size:.88rem;font-weight:800;margin-bottom:2px;}
+.mode-option-text span{font-size:.74rem;color:var(--muted);}
+.mode-divider{height:1px;background:var(--border);margin:4px 0;}
+.mode-apply{
+  width:100%;padding:12px;background:var(--mint);color:#052218;
+  border:none;border-radius:10px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;
+  transition:opacity .18s,transform .1s;
+}
+.mode-apply:hover{opacity:.88;transform:translateY(-1px);}
+
+/* Player popup */
+.popup{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:22px;padding:26px 22px 22px;
+  max-width:370px;width:100%;max-height:88vh;overflow-y:auto;position:relative;
+  animation:popIn .26s cubic-bezier(.34,1.56,.64,1);
+}
+.popup-rank-badge{position:absolute;top:20px;left:20px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;background:rgba(255,255,255,.05);color:var(--muted);font-family:'Rajdhani',sans-serif;}
+.popup-rank-badge.rank-1{background:var(--gold-s);color:var(--gold);}
+.popup-rank-badge.rank-2{background:var(--silver-s);color:var(--silver);}
+.popup-rank-badge.rank-3{background:var(--bronze-s);color:var(--bronze);}
+.popup-header{text-align:center;margin-bottom:14px;}
+#popup-avatar{width:70px;height:70px;border-radius:50%;border:2px solid var(--mint);object-fit:cover;margin-bottom:9px;box-shadow:0 0 20px rgba(45,212,160,.2);}
+.popup-name{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.02em;}
+.popup-display-name{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.popup-meta{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+.popup-tag{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);text-transform:uppercase;display:inline-flex;align-items:center;gap:3px;font-family:'Nunito',sans-serif;}
+.popup-stats{display:grid;gap:4px;margin-bottom:13px;}
+.p-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:var(--surface-alt);border:1px solid var(--border);}
+.p-stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;}
+.p-stat-value{display:flex;align-items:baseline;gap:4px;font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:600;}
+.p-stat-max{font-size:.65rem;color:var(--muted);opacity:.5;}
+.p-stat-row.nb-row{border-color:rgba(157,127,234,.2);background:rgba(157,127,234,.05);}
+.p-stat-row.nb-row .p-stat-label{color:var(--purple);}
+.p-stat-row.ov-row{border-color:rgba(45,212,160,.22);background:rgba(45,212,160,.05);}
+.p-stat-row.ov-row .p-stat-label{color:var(--mint);}
+.p-stat-row.ov-row .p-stat-value{font-size:1.1rem;color:var(--mint);}
+.p-stat-row.highlight-row{outline:1px solid var(--mint);}
+.popup-links{display:flex;gap:8px;margin-bottom:11px;}
+.popup-link{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--surface-alt);color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:700;transition:all .18s;}
+.popup-link:hover{color:var(--mint);border-color:rgba(45,212,160,.3);background:var(--mint-s);}
+.popup-link img{width:14px;height:14px;border-radius:3px;object-fit:contain;}
+.popup-close{width:100%;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:9px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:.86rem;transition:all .18s;}
+.popup-close:hover{background:var(--mint-s);color:var(--mint);border-color:rgba(45,212,160,.3);}
+
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .stats-grid{padding:0 12px;}
+  .stat-tabs{padding:0 12px 16px;}
+  .banner-inner{padding:10px 0;}
+  .hero h1{font-size:1.9rem;}
+}
+/* ══ MOUSE GLOW (dimmed) ══ */
+#mouse-glow{
+  position:fixed;pointer-events:none;z-index:2;
+  width:540px;height:540px;border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(157,127,234,0.10) 0%,
+    rgba(99,102,241,0.06)  28%,
+    rgba(45,212,160,0.025)  54%,
+    transparent 70%);
+  transform:translate(-50%,-50%);
+  left:-9999px;top:-9999px;
+  filter:blur(2px);mix-blend-mode:screen;
+  opacity:0;transition:opacity .45s ease;
+}
+body.mouse-active #mouse-glow{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- Mouse glow -->
+<div id="mouse-glow"></div>
+
+<!-- ══ BANNER ══ -->
+<header class="banner">
+  <div class="banner-inner">
+    <div class="brand">
+      <div class="brand-mark">TT</div>
+      <div>
+        <div class="brand-name">TTTiers</div>
+        <div class="brand-sub">Speedrun Rankings</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button class="mode-btn" id="mode-selector-btn">
+        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        View
+        <span class="mode-chip" id="mode-label-text">Stat Rankings</span>
+      </button>
+      <nav class="banner-nav">
+        <a href="index.html" class="nav-link">
+          <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+          Leaderboard
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-eyebrow">Individual Stat Rankings</div>
+    <h1>Who tops each <em>category?</em></h1>
+    <p class="hero-sub">Every runner ranked per individual stat. Pick a tab or view all four side by side.</p>
+  </section>
+
+  <!-- ── STAT TABS ── -->
+  <div class="stat-tabs" id="stat-tabs">
+    <button class="stat-tab active" data-stat="all">
+      <span class="tab-icon" style="background:rgba(255,255,255,.08);">🏆</span> All Stats
+    </button>
+    <button class="stat-tab" data-stat="bounce">
+      <span class="tab-icon" style="background:rgba(251,191,36,.15);color:#fbbf24;">B</span> Bounce
+    </button>
+    <button class="stat-tab" data-stat="consistency">
+      <span class="tab-icon" style="background:rgba(45,212,160,.15);color:#2dd4a0;">C</span> Consistency
+    </button>
+    <button class="stat-tab" data-stat="cam">
+      <span class="tab-icon" style="background:rgba(249,115,22,.15);color:#f97316;">CM</span> Cam Control
+    </button>
+    <button class="stat-tab" data-stat="nobounce">
+      <span class="tab-icon" style="background:rgba(157,127,234,.15);color:#9d7fea;">NB</span> No Bounce
+    </button>
+  </div>
+
+  <div class="stats-grid" id="stats-grid">
+    <!-- skeleton placeholders -->
+    <div class="stat-col visible" style="opacity:.5">
+      <div class="col-header"><div class="col-icon" style="background:rgba(251,191,36,.1);"></div><div><div class="col-title" style="height:12px;background:var(--surface-alt);border-radius:4px;width:80px;"></div></div></div>
+      <ul class="col-list"><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li></ul>
+    </div>
+    <div class="stat-col visible" style="opacity:.5">
+      <div class="col-header"><div class="col-icon" style="background:rgba(45,212,160,.1);"></div><div></div></div>
+      <ul class="col-list"><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li></ul>
+    </div>
+    <div class="stat-col visible" style="opacity:.5">
+      <div class="col-header"><div class="col-icon" style="background:rgba(249,115,22,.1);"></div><div></div></div>
+      <ul class="col-list"><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li></ul>
+    </div>
+    <div class="stat-col visible" style="opacity:.5">
+      <div class="col-header"><div class="col-icon" style="background:rgba(157,127,234,.1);"></div><div></div></div>
+      <ul class="col-list"><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li><li class="skeleton-row"></li></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODE OVERLAY ══ -->
+<div id="mode-overlay" class="overlay">
+  <div class="mode-popup">
+    <div class="mode-popup-title">Choose a View</div>
+    <div class="mode-popup-sub">Filter by platform or jump to a different page.</div>
+    <div class="mode-options">
+      <button class="mode-option" data-mode="all" data-page="index.html">
+        <div class="mode-option-icon" style="background:rgba(45,212,160,.12);">🏆</div>
+        <div class="mode-option-text"><strong>All Players</strong><span>Everyone ranked by overall score</span></div>
+      </button>
+      <button class="mode-option" data-mode="pc" data-page="index.html">
+        <div class="mode-option-icon" style="background:rgba(96,165,250,.12);">🖥️</div>
+        <div class="mode-option-text"><strong>PC Only</strong><span>Desktop / keyboard players only</span></div>
+      </button>
+      <button class="mode-option" data-mode="mobile" data-page="index.html">
+        <div class="mode-option-icon" style="background:rgba(157,127,234,.12);">📱</div>
+        <div class="mode-option-text"><strong>Mobile Only</strong><span>Touchscreen players only</span></div>
+      </button>
+      <div class="mode-divider"></div>
+      <button class="mode-option selected" data-mode="stats" data-page="stats.html">
+        <div class="mode-option-icon" style="background:rgba(251,191,36,.12);">📊</div>
+        <div class="mode-option-text"><strong>Stat Rankings</strong><span>Top players per individual stat</span></div>
+      </button>
+    </div>
+    <button class="mode-apply" id="mode-apply">Apply View</button>
+  </div>
+</div>
+
+<!-- ══ PLAYER POPUP ══ -->
+<div id="player-overlay" class="overlay">
+  <div class="popup">
+    <div id="popup-rank-badge" class="popup-rank-badge"></div>
+    <div class="popup-header">
+      <img id="popup-avatar" src="" alt="Player avatar">
+      <div class="popup-name" id="popup-main-name"></div>
+      <div class="popup-display-name" id="popup-display-name"></div>
+      <div class="popup-meta">
+        <span class="popup-tag" id="popup-region"></span>
+        <span class="popup-tag" id="popup-device"></span>
+      </div>
+    </div>
+    <div class="popup-links">
+      <a id="popup-roblox" href="#" target="_blank" class="popup-link">
+        <img src="roblox.png" alt="" onerror="this.style.display='none'"> Roblox
+      </a>
+      <a id="popup-youtube" href="#" target="_blank" class="popup-link" style="display:none">
+        <img src="youtube.png" alt="" onerror="this.style.display='none'"> YouTube
+      </a>
+    </div>
+    <div class="popup-stats">
+      <div class="p-stat-row" id="pr-bounce"><span class="p-stat-label">Bounce</span><span class="p-stat-value" id="popup-bounce"></span></div>
+      <div class="p-stat-row" id="pr-consistency"><span class="p-stat-label">Consistency</span><span class="p-stat-value" id="popup-consistency"></span></div>
+      <div class="p-stat-row" id="pr-cam"><span class="p-stat-label">Camera Control</span><span class="p-stat-value" id="popup-cam"></span></div>
+      <div class="p-stat-row nb-row" id="pr-nobounce"><span class="p-stat-label">No Bounce</span><span class="p-stat-value" id="popup-nobounce"></span></div>
+      <div class="p-stat-row ov-row"><span class="p-stat-label">Overall</span><span class="p-stat-value" id="popup-overall"></span></div>
+    </div>
+    <button class="popup-close" id="popup-close">Close</button>
+  </div>
+</div>
+
+<script>
+const REGION_MAP={
+  NA:{name:"North America",color:"#60a5fa",bg:"rgba(96,165,250,.18)"},
+  EU:{name:"Europe",color:"#34d399",bg:"rgba(52,211,153,.18)"},
+  OC:{name:"Oceania",color:"#fbbf24",bg:"rgba(251,191,36,.18)"},
+  AS:{name:"Asia",color:"#f87171",bg:"rgba(248,113,113,.18)"},
+  SA:{name:"South America",color:"#a78bfa",bg:"rgba(167,139,250,.18)"},
+  AF:{name:"Africa",color:"#fb923c",bg:"rgba(251,146,60,.18)"},
+  "N/A":{name:"Unknown",color:"#6b8aaa",bg:"rgba(107,138,170,.12)"}
+};
+const TIERS=[
+  {min:0,  max:19,  cls:"tier-f",  label:"F"},
+  {min:20, max:39,  cls:"tier-d",  label:"D"},
+  {min:40, max:59,  cls:"tier-c",  label:"C"},
+  {min:60, max:74,  cls:"tier-b",  label:"B"},
+  {min:75, max:89,  cls:"tier-a",  label:"A"},
+  {min:90, max:94,  cls:"tier-s",  label:"S"},
+  {min:95, max:99,  cls:"tier-ss", label:"SS"},
+  {min:100,max:100, cls:"tier-z",  label:"Z"},
+];
+function getTier(v){return TIERS.find(t=>v>=t.min&&v<=t.max)||TIERS[0];}
+function getRegion(c){return REGION_MAP[(c||"").toUpperCase()]||REGION_MAP["N/A"];}
+function calcOverall(r){return(r.bounce||0)+(r.nobounce||0)+(r.consistency||0)+(r.cam||0);}
+function sv(v,max=100){return `${v}<span class="p-stat-max"> / ${max}</span>`;}
+function crownIcon(rank){
+  if(rank>3)return"";
+  return `<span class="crown-icon crown-${rank}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 7l5.5 4L12 4l3.5 7L21 7l-2 9H5zm0 2h14v2H5v-2z"/></svg></span>`;
+}
+
+const STAT_DEFS=[
+  {key:"bounce",      label:"Bounce",      sub:"Ball control & bounce skill",  color:"#fbbf24", icon:"B"},
+  {key:"consistency", label:"Consistency", sub:"Reliability across runs",      color:"#2dd4a0", icon:"C"},
+  {key:"cam",         label:"Cam Control", sub:"Camera movement mastery",      color:"#f97316", icon:"CM"},
+  {key:"nobounce",    label:"No Bounce",   sub:"Performance without bounce",   color:"#9d7fea", icon:"NB"},
+];
+
+let allRunners=[];
+const avatarCache={};
+let pendingMode="stats";
+
+function buildColumns(runners){
+  const grid=document.getElementById("stats-grid");
+  grid.innerHTML="";
+  STAT_DEFS.forEach(def=>{
+    const sorted=[...runners].sort((a,b)=>(b[def.key]||0)-(a[def.key]||0));
+    const col=document.createElement("div");
+    col.className="stat-col visible";col.dataset.stat=def.key;
+    col.innerHTML=`
+      <div class="col-header">
+        <div class="col-icon" style="background:${def.color}20;color:${def.color}">${def.icon}</div>
+        <div>
+          <div class="col-title" style="color:${def.color}">${def.label}</div>
+          <div class="col-sub">${def.sub}</div>
+        </div>
+      </div>
+      <div class="col-subheader">
+        <div>#</div><div>Player</div><div>Score</div><div>Tier</div>
+      </div>
+      <ul class="col-list" id="col-${def.key}">
+        ${sorted.map((r,i)=>{
+          const rank=i+1,val=r[def.key]||0,t=getTier(val);
+          const rc=rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"";
+          return `<li class="col-row ${rc}" data-userid="${r.id}" data-stat="${def.key}">
+            <div class="col-rank ${rc}">${rank}</div>
+            <div class="col-info">
+              <img class="col-avatar" loading="lazy" src="" alt="${r.name}" data-uid="${r.id}">
+              <div class="col-text">
+                <div class="col-name">${crownIcon(rank)}@${r.name}</div>
+                <div class="col-display">(${r.display})</div>
+              </div>
+            </div>
+            <div class="col-score-cell"><span class="score-num" style="color:${def.color}">${val}</span></div>
+            <div class="col-score-cell"><span class="tier-badge ${t.cls}">${t.label}</span></div>
+          </li>`;
+        }).join("")}
+      </ul>`;
+    grid.appendChild(col);
+  });
+  document.querySelectorAll(".col-row").forEach(row=>{
+    row.onclick=()=>{const r=allRunners.find(x=>x.id==row.dataset.userid);if(r)openPopup(r,row.dataset.stat);};
+  });
+  loadColAvatars();
+}
+
+function filterColumns(stat){
+  document.querySelectorAll(".stat-col").forEach(c=>c.classList.toggle("visible",stat==="all"||c.dataset.stat===stat));
+  document.querySelectorAll(".stat-tab").forEach(tab=>{
+    const active=tab.dataset.stat===stat;
+    tab.classList.toggle("active",active);
+  });
+}
+
+async function openPopup(runner,highlightStat){
+  const sorted=[...allRunners].sort((a,b)=>calcOverall(b)-calcOverall(a));
+  const rank=sorted.findIndex(r=>r.id==runner.id)+1;
+  const rb=document.getElementById("popup-rank-badge");
+  rb.textContent="#"+rank;rb.className="popup-rank-badge"+(rank<=3?" rank-"+rank:"");
+  document.getElementById("popup-main-name").textContent="@"+runner.name;
+  document.getElementById("popup-display-name").textContent="("+runner.display+")";
+  const reg=getRegion(runner.region);
+  const rel=document.getElementById("popup-region");
+  rel.textContent=reg.name;rel.style.color=reg.color;rel.style.borderColor=reg.color+"40";rel.style.background=reg.bg;
+  document.getElementById("popup-device").textContent=runner.device||"Unknown";
+  document.getElementById("popup-bounce").innerHTML=sv(runner.bounce||0);
+  document.getElementById("popup-consistency").innerHTML=sv(runner.consistency||0);
+  document.getElementById("popup-cam").innerHTML=sv(runner.cam||0);
+  document.getElementById("popup-nobounce").innerHTML=sv(runner.nobounce||0);
+  document.getElementById("popup-overall").innerHTML=sv(calcOverall(runner),400);
+  document.getElementById("popup-roblox").href=`https://www.roblox.com/users/${runner.id}/profile`;
+  const yt=document.getElementById("popup-youtube");
+  yt.style.display=(runner.youtube&&runner.youtube.trim())?"flex":"none";
+  if(runner.youtube)yt.href=runner.youtube;
+  ["pr-bounce","pr-consistency","pr-cam","pr-nobounce"].forEach(id=>{
+    document.getElementById(id).classList.remove("highlight-row");
+  });
+  if(highlightStat){
+    const map={bounce:"pr-bounce",consistency:"pr-consistency",cam:"pr-cam",nobounce:"pr-nobounce"};
+    if(map[highlightStat])document.getElementById(map[highlightStat]).classList.add("highlight-row");
+  }
+  const img=document.getElementById("popup-avatar");img.src="";
+  if(avatarCache[runner.id]){img.src=avatarCache[runner.id];}
+  else{try{const res=await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${runner.id}&size=150x150&format=Png&isCircular=true`);const d=await res.json();if(d.data?.[0]){avatarCache[runner.id]=d.data[0].imageUrl;img.src=d.data[0].imageUrl;}}catch(e){}}
+  document.getElementById("player-overlay").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+
+function closeOv(id){document.getElementById(id).classList.remove("open");document.body.style.overflow="";}
+
+async function loadColAvatars(){
+  const imgs=Array.from(document.querySelectorAll(".col-avatar"));
+  const ids=[...new Set(imgs.map(i=>i.dataset.uid).filter(Boolean))];
+  imgs.forEach(i=>{if(avatarCache[i.dataset.uid]){i.src=avatarCache[i.dataset.uid];i.style.opacity="1";}});
+  for(let i=0;i<ids.length;i+=100){
+    try{
+      const res=await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${ids.slice(i,i+100).join(",")}&size=150x150&format=Png&isCircular=true`);
+      const d=await res.json();
+      d.data?.forEach(x=>{avatarCache[x.targetId]=x.imageUrl;document.querySelectorAll(`.col-avatar[data-uid="${x.targetId}"]`).forEach(img=>{img.src=x.imageUrl;img.style.opacity="1";});});
+      if(i+100<ids.length)await new Promise(r=>setTimeout(r,300));
+    }catch(e){}
+  }
+}
+
+// Mode selector
+document.getElementById("mode-selector-btn").onclick=()=>{
+  pendingMode="stats";
+  document.querySelectorAll(".mode-option").forEach(o=>o.classList.toggle("selected",o.dataset.mode==="stats"));
+  document.getElementById("mode-overlay").classList.add("open");
+  document.body.style.overflow="hidden";
+};
+document.querySelectorAll(".mode-option").forEach(btn=>{
+  btn.onclick=function(){
+    pendingMode=this.dataset.mode;
+    document.querySelectorAll(".mode-option").forEach(o=>o.classList.remove("selected"));
+    this.classList.add("selected");
+  };
+});
+document.getElementById("mode-apply").onclick = () => {
+  closeOv("mode-overlay");
+
+  const modeLabel = document.getElementById("mode-label-text");
+
+  if (pendingMode === "stats") {
+    modeLabel.textContent = "Stat Rankings";
+    return;
+  }
+
+  if (pendingMode === "all") {
+    modeLabel.textContent = "All Players";
+    window.location.href = "index.html";
+  }
+  else if (pendingMode === "pc") {
+    modeLabel.textContent = "PC Only";
+    window.location.href = "index.html?mode=pc";
+  }
+  else if (pendingMode === "mobile") {
+    modeLabel.textContent = "Mobile Only";
+    window.location.href = "index.html?mode=mobile";
+  }
+};
+document.getElementById("mode-overlay").addEventListener("click",e=>{if(!e.target.closest(".mode-popup"))closeOv("mode-overlay");});
+document.getElementById("popup-close").onclick=()=>closeOv("player-overlay");
+document.getElementById("player-overlay").addEventListener("click",e=>{if(!e.target.closest(".popup"))closeOv("player-overlay");});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOv("player-overlay");closeOv("mode-overlay");}});
+
+document.getElementById("stat-tabs").addEventListener("click",e=>{const tab=e.target.closest(".stat-tab");if(tab)filterColumns(tab.dataset.stat);});
+
+async function init(){
+  try{
+    const res=await fetch("runners.json");
+    allRunners=await res.json();
+    buildColumns(allRunners);
+  }catch(err){
+    document.getElementById("stats-grid").innerHTML=`<p style="text-align:center;color:var(--muted);padding:40px;grid-column:1/-1">Could not load runners.json</p>`;
+  }
+}
+window.addEventListener("DOMContentLoaded",init);
+
+/* ══ MOUSE GLOW (dimmed) ══ */
+(function(){
+  const glow = document.getElementById('mouse-glow');
+  if(!glow) return;
+  let lx=-9999,ly=-9999,tx=-9999,ty=-9999,on=false;
+  document.addEventListener('mousemove',e=>{
+    tx=e.clientX; ty=e.clientY;
+    if(!on){ on=true; document.body.classList.add('mouse-active'); }
+  });
+  document.addEventListener('mouseleave',()=>{ on=false; document.body.classList.remove('mouse-active'); });
+  function tick(){
+    lx+=(tx-lx)*0.09; ly+=(ty-ly)*0.09;
+    glow.style.left=lx+'px'; glow.style.top=ly+'px';
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>
