@@ -693,36 +693,16 @@ body.mouse-active #mouse-glow{opacity:1;}
   requestAnimationFrame(draw);
 })();
 
-<!-- ══ MOUSE GLOW ══ -->
-<script>
+/* ══ MOUSE GLOW ══ */
 (function(){
-  const g = document.getElementById('mouse-glow');
-  if (!g) return;
-  let lx = -9999, ly = -9999, tx = -9999, ty = -9999;
-  let on = false;
-  function tick() {
-    lx += (tx - lx) * 0.09;
-    ly += (ty - ly) * 0.09;
-    g.style.left = lx + 'px';
-    g.style.top = ly + 'px';
-    requestAnimationFrame(tick);
-  }
-  document.addEventListener('mousemove', e => {
-    tx = e.clientX;
-    ty = e.clientY;
-    if (!on) {
-      on = true;
-      document.body.classList.add('mouse-active');
-    }
-  });
-  document.addEventListener('mouseleave', () => {
-    on = false;
-    document.body.classList.remove('mouse-active');
-  });
+  const g=document.getElementById('mouse-glow');
+  if(!g)return;
+  let lx=-9999,ly=-9999,tx=-9999,ty=-9999,on=false;
+  document.addEventListener('mousemove',e=>{tx=e.clientX;ty=e.clientY;if(!on){on=true;document.body.classList.add('mouse-active');}});
+  document.addEventListener('mouseleave',()=>{on=false;document.body.classList.remove('mouse-active');});
+  function tick(){lx+=(tx-lx)*0.09;ly+=(ty-ly)*0.09;g.style.left=lx+'px';g.style.top=ly+'px';requestAnimationFrame(tick);}
   tick();
 })();
-</script>
-  <script>
 
 /* ══ LEADERBOARD LOGIC ══ */
 const REGION_MAP={
