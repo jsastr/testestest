@@ -80,32 +80,31 @@ body::after{
     radial-gradient(ellipse 30% 28% at 85% 18%,  rgba(80,40,180,0.07), transparent 45%);}
 }
 
-/* ══ MOUSE GLOW (Strong & Visible) ══ */
-/* ══ MOUSE GLOW — STRONG VERSION ══ */
+/* ══ MOUSE GLOW — STRONG GLOBAL TRACKING ══ */
 #mouse-glow{
   position:fixed;
   pointer-events:none;
-  z-index:2;
-  width:1000px;
-  height:1000px;
+  z-index:9999; /* High z-index so it's always on top */
+  width:1100px;
+  height:1100px;
   border-radius:50%;
   background:radial-gradient(circle,
-    rgba(200,140,255,0.98) 0%,
-    rgba(180,110,255,0.95) 10%,
-    rgba(160,90,255,0.9) 25%,
-    rgba(145,70,255,0.8) 40%,
-    rgba(124,58,237,0.7) 55%,
-    rgba(110,50,230,0.5) 70%,
-    rgba(90,40,210,0.3) 85%,
+    rgba(200,140,255,0.97) 0%,
+    rgba(180,120,255,0.94) 15%,
+    rgba(160,100,255,0.88) 30%,
+    rgba(140,80,255,0.78) 45%,
+    rgba(124,58,237,0.65) 60%,
+    rgba(110,50,230,0.45) 75%,
+    rgba(90,40,210,0.25) 88%,
     transparent 100%);
   transform:translate(-50%,-50%);
   left:-9999px;
   top:-9999px;
-  filter:blur(8px);
+  filter:blur(9px);
   mix-blend-mode:screen;
   opacity:0;
-  transition:opacity .2s ease;
-  box-shadow:0 0 180px rgba(200,140,255,0.9);
+  transition:opacity .25s ease;
+  box-shadow:0 0 200px rgba(190,130,255,0.85);
 }
 body.mouse-active #mouse-glow{opacity:1 !important;}
 /* ── BANNER ── */
@@ -705,29 +704,33 @@ body.mouse-active #mouse-glow{opacity:1 !important;}
   requestAnimationFrame(draw);
 })();
 
-/* ══ MOUSE GLOW ══ */
+/* ══ MOUSE GLOW TRACKING ══ */
 (function(){
   const g = document.getElementById('mouse-glow');
   if(!g) return;
-  let lx = -9999, ly = -9999, tx = -9999, ty = -9999, on = false;
-  
-  document.addEventListener('mousemove', e => {
+
+  let lx = -9999, ly = -9999, tx = -9999, ty = -9999;
+  let active = false;
+
+  // Make sure it works everywhere
+  document.documentElement.addEventListener('mousemove', e => {
     tx = e.clientX;
     ty = e.clientY;
-    if(!on){
-      on = true;
+    
+    if(!active){
+      active = true;
       document.body.classList.add('mouse-active');
     }
-  });
-  
-  document.addEventListener('mouseleave', () => {
-    on = false;
+  }, true); // Use capture phase
+
+  document.documentElement.addEventListener('mouseleave', () => {
+    active = false;
     document.body.classList.remove('mouse-active');
   });
-  
+
   function tick(){
-    lx += (tx - lx) * 0.12;
-    ly += (ty - ly) * 0.12;
+    lx += (tx - lx) * 0.14;   // Slightly faster follow
+    ly += (ty - ly) * 0.14;
     g.style.left = lx + 'px';
     g.style.top = ly + 'px';
     requestAnimationFrame(tick);
