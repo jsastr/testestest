@@ -73,20 +73,26 @@ body::before{
 }
 
 /* ══ MOUSE GLOW — icy follow light ══ */
-#mouse-glow{
-  position:fixed;pointer-events:none;z-index:5;
-  width:620px;height:620px;border-radius:50%;
-  background:radial-gradient(circle,
-    rgba(224,250,255,0.26) 0%,
-    rgba(173,236,255,0.16) 22%,
-    rgba(125,211,252,0.10) 44%,
-    rgba(34,211,238,0.04)  64%,
-    transparent 76%);
-  transform:translate(-50%,-50%);
-  left:0;top:0;
-  opacity:0;
-  transition:opacity .35s ease;
+#mouse-glow {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(125, 211, 252, 0.22) 0%,
+    rgba(56, 189, 248, 0.12)  30%,
+    rgba(34, 211, 238, 0.05)  58%,
+    transparent 72%);
+  transform: translate(-50%, -50%);
+  left: -9999px;
+  top: -9999px;
+  filter: blur(32px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
+body.mouse-active #mouse-glow { opacity: 1; }
 
 @media(prefers-reduced-motion:reduce){
   .banner,.page{animation:none;opacity:1;}
@@ -512,32 +518,28 @@ body::before{
 
 /* ══ MOUSE GLOW ══ */
 (function(){
-  const g=document.getElementById('mouse-glow');
-  if(!g)return;
-  let lx=null,ly=null,tx=null,ty=null;
-
-  function setPos(x,y){
-    tx=x;ty=y;
-    if(lx===null){lx=x;ly=y;g.style.left=lx+'px';g.style.top=ly+'px';}
-    g.style.opacity='1';
-  }
-  function fadeOut(){g.style.opacity='0';}
-
-  window.addEventListener('pointermove',e=>setPos(e.clientX,e.clientY),{passive:true});
-  window.addEventListener('mousemove',e=>setPos(e.clientX,e.clientY),{passive:true});
-  document.addEventListener('mouseleave',fadeOut);
-  window.addEventListener('blur',fadeOut);
-
-  function tick(){
-    if(tx!==null){
-      lx+=(tx-lx)*0.09;
-      ly+=(ty-ly)*0.09;
-      g.style.left=lx+'px';
-      g.style.top=ly+'px';
+  const g = document.getElementById('mouse-glow');
+  if (!g) return;
+  let lx = -9999, ly = -9999, tx = 0, ty = 0, on = false;
+  document.addEventListener('mousemove', e => {
+    tx = e.clientX; ty = e.clientY;
+    if (!on) {
+      on = true;
+      lx = tx; ly = ty; // snap on first move, no crawl from offscreen
+      document.body.classList.add('mouse-active');
     }
+  });
+  document.addEventListener('mouseleave', () => {
+    on = false;
+    document.body.classList.remove('mouse-active');
+  });
+  (function tick() {
+    lx += (tx - lx) * 0.10;
+    ly += (ty - ly) * 0.10;
+    g.style.left = lx + 'px';
+    g.style.top = ly + 'px';
     requestAnimationFrame(tick);
-  }
-  tick();
+  })();
 })();
 
 /* ══ STAT RANKINGS LOGIC (unchanged) ══ */
