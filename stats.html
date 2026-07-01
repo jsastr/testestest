@@ -34,53 +34,48 @@ body{font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;overflow
 
 @keyframes pageFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
-  /* Starfield Canvas */
-#stars-canvas{
+/* ══ STARFIELD CANVAS — twinkling stars, drifting snow, shooting stars ══ */
+#starfield-canvas{
   position:fixed;
   inset:0;
-  z-index:-3;
+  z-index:-4;
   pointer-events:none;
   width:100%;
   height:100%;
 }
 
-/* ══ ICE CANVAS — twinkling stars + gentle snowfall ══ */
-#ice-canvas{position:fixed;inset:0;z-index:-3;pointer-events:none;width:100%;height:100%;}
-
-/* ══ FROST BACKDROP ══ */
+/* ══ FROST BACKDROP — two static gradient layers cross-fading via opacity ══
+   (previously a single layer animated its `background` property directly,
+   which forces a full-viewport repaint every frame; opacity is
+   compositor-only, so this reads the same but is far cheaper to run.
+   Also: the old version ended its gradient list with a solid #040a14,
+   which made this layer fully OPAQUE and sat above the star canvases in
+   the stacking order — that's why no stars were visible at all. Dropping
+   the solid color and moving the canvas to the back fixes that.) */
 body::before{
-  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  content:'';position:fixed;inset:0;z-index:-3;pointer-events:none;
   background:
     radial-gradient(ellipse 80% 50% at 18% 0%,  rgba(125,211,252,.18), transparent 58%),
     radial-gradient(ellipse 55% 45% at 88% 8%,  rgba(224,247,255,.10), transparent 55%),
     radial-gradient(ellipse 60% 60% at 50% 100%,rgba(34,211,238,.12), transparent 62%),
     radial-gradient(ellipse 38% 32% at 4%  72%, rgba(56,189,248,.10), transparent 54%),
-    radial-gradient(ellipse 30% 28% at 92% 65%, rgba(224,247,255,.07), transparent 50%),
-    #040a14;
-  animation:frostShift 24s ease-in-out infinite alternate;
+    radial-gradient(ellipse 30% 28% at 92% 65%, rgba(224,247,255,.07), transparent 50%);
 }
-@keyframes frostShift{
-  0%{background:
-    radial-gradient(ellipse 80% 50% at 18% 0%,  rgba(125,211,252,.18), transparent 58%),
-    radial-gradient(ellipse 55% 45% at 88% 8%,  rgba(224,247,255,.10), transparent 55%),
-    radial-gradient(ellipse 60% 60% at 50% 100%,rgba(34,211,238,.12), transparent 62%),
-    radial-gradient(ellipse 38% 32% at 4%  72%, rgba(56,189,248,.10), transparent 54%),
-    radial-gradient(ellipse 30% 28% at 92% 65%, rgba(224,247,255,.07), transparent 50%),
-    #040a14;}
-  50%{background:
-    radial-gradient(ellipse 80% 50% at 75% 4%,  rgba(34,211,238,.16), transparent 58%),
-    radial-gradient(ellipse 55% 45% at 10% 10%, rgba(125,211,252,.14), transparent 55%),
-    radial-gradient(ellipse 60% 60% at 30% 95%, rgba(224,247,255,.10), transparent 62%),
-    radial-gradient(ellipse 38% 32% at 90% 70%, rgba(56,189,248,.09), transparent 54%),
-    radial-gradient(ellipse 30% 28% at 15% 35%, rgba(125,211,252,.07), transparent 50%),
-    #040a14;}
-  100%{background:
+body::after{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
     radial-gradient(ellipse 80% 50% at 45% 1%,  rgba(56,189,248,.20), transparent 58%),
     radial-gradient(ellipse 55% 45% at 92% 24%, rgba(34,211,238,.12), transparent 55%),
     radial-gradient(ellipse 60% 60% at 8%  88%, rgba(125,211,252,.12), transparent 62%),
     radial-gradient(ellipse 38% 32% at 65% 78%, rgba(224,247,255,.08), transparent 54%),
-    radial-gradient(ellipse 30% 28% at 20% 45%, rgba(56,189,248,.07), transparent 50%),
-    #040a14;}
+    radial-gradient(ellipse 30% 28% at 20% 45%, rgba(56,189,248,.07), transparent 50%);
+  animation:frostFade 24s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes frostFade{
+  0%{opacity:0;}
+  50%{opacity:.6;}
+  100%{opacity:1;}
 }
 
 /* ══ BANNER ══ */
@@ -284,15 +279,16 @@ body::before{
   .banner-inner{padding:10px 0;}
   .hero h1{font-size:1.9rem;}
 }
+@media(prefers-reduced-motion:reduce){
+  .banner{animation:none;opacity:1;}
+  body::after{animation:none;}
+}
 </style>
 </head>
 <body>
 
-  <!-- Stars Canvas -->
-<canvas id="stars-canvas"></canvas>
-
-<!-- Ice / snow canvas -->
-<canvas id="ice-canvas"></canvas>
+  <!-- Starfield Canvas -->
+<canvas id="starfield-canvas"></canvas>
 
 <!-- ══ BANNER ══ -->
 <header class="banner">
@@ -435,50 +431,77 @@ body::before{
 </div>
 
 <script>
-/* ══ ICE CANVAS — twinkling ice-stars + gentle snowfall ══ */
+/* ══ UNIFIED STARFIELD — twinkling stars, drifting snow, shooting stars ══
+   (previously two separate canvases each running their own animation loop
+   — up to ~1700 particles redrawn across two full-viewport clears every
+   frame, uncapped. Merged into one canvas/one loop, frame-rate capped,
+   paused on hidden tabs, and resize is debounced.) */
 (function(){
-  const c=document.getElementById('ice-canvas');
+  const c=document.getElementById('starfield-canvas');
   const ctx=c.getContext('2d');
-  let W,H,stars=[],flakes=[];
+  let W,H,stars=[],flakes=[],shooters=[];
+  let lastFrame=0;
+  const FRAME_MS=1000/40; // background decoration doesn't need 60fps
+  let resizeTimer;
 
   function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
 
-  function mk(){
+  function mkParticles(){
+    const area=W*H;
     stars=[];
-    const n=Math.floor(W*H/5200);
+    const n=Math.min(220,Math.floor(area/6000));
     for(let i=0;i<n;i++){
       stars.push({
         x:Math.random()*W, y:Math.random()*H,
-        r:Math.random()*1.3+0.25,
+        r:Math.random()*1.5+0.3,
+        dx:(Math.random()-0.5)*0.06,
+        dy:(Math.random()-0.5)*0.04,
         phase:Math.random()*Math.PI*2,
-        ts:0.004+Math.random()*0.012,
+        ts:0.004+Math.random()*0.014,
         tinted:Math.random()<0.3,
       });
     }
     flakes=[];
-    const m=Math.floor(W*H/15000);
+    const m=Math.min(70,Math.floor(area/22000));
     for(let i=0;i<m;i++){
       flakes.push({
         x:Math.random()*W, y:Math.random()*H,
-        r:Math.random()*2+1.4,
-        vy:Math.random()*0.35+0.15,
-        vx:(Math.random()-0.5)*0.25,
+        r:Math.random()*1.8+1.2,
+        vy:Math.random()*0.3+0.15,
+        vx:(Math.random()-0.5)*0.2,
         sway:Math.random()*Math.PI*2,
         sspeed:0.01+Math.random()*0.02,
-        a:Math.random()*0.35+0.18,
+        a:Math.random()*0.3+0.15,
       });
     }
   }
 
+  function spawnShooter(){
+    if(shooters.length>=2)return;
+    const spd=6+Math.random()*7;
+    const ang=(18+Math.random()*20)*Math.PI/180;
+    shooters.push({
+      x:Math.random()*W*0.6+W*0.2, y:Math.random()*H*0.3,
+      vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+      life:1, decay:0.011+Math.random()*0.009,
+      len:60+Math.random()*90,
+    });
+  }
+
   function draw(){
     ctx.clearRect(0,0,W,H);
+    // twinkling stars
     stars.forEach(s=>{
+      s.x+=s.dx; s.y+=s.dy;
+      if(s.x<0)s.x=W; if(s.x>W)s.x=0;
+      if(s.y<0)s.y=H; if(s.y>H)s.y=0;
       s.phase+=s.ts;
-      const a=0.18+0.7*Math.abs(Math.sin(s.phase));
+      const a=0.2+0.7*Math.abs(Math.sin(s.phase));
       ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
       ctx.fillStyle=s.tinted?`hsla(195,75%,90%,${a})`:`rgba(235,247,255,${a})`;
       ctx.fill();
     });
+    // gentle snow
     flakes.forEach(f=>{
       f.sway+=f.sspeed;
       f.y+=f.vy; f.x+=f.vx+Math.sin(f.sway)*0.15;
@@ -488,12 +511,36 @@ body::before{
       ctx.fillStyle=`rgba(224,247,255,${f.a})`;
       ctx.fill();
     });
-    requestAnimationFrame(draw);
+    // shooting stars
+    shooters=shooters.filter(s=>s.life>0);
+    shooters.forEach(s=>{
+      const len=s.len/Math.hypot(s.vx,s.vy);
+      const tx=s.x-s.vx*len, ty=s.y-s.vy*len;
+      const g=ctx.createLinearGradient(tx,ty,s.x,s.y);
+      g.addColorStop(0,'rgba(224,247,255,0)');
+      g.addColorStop(1,`rgba(224,247,255,${s.life*0.9})`);
+      ctx.save();ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(s.x,s.y);
+      ctx.strokeStyle=g;ctx.lineWidth=1.6*s.life;ctx.stroke();ctx.restore();
+      s.x+=s.vx;s.y+=s.vy;s.life-=s.decay;
+    });
   }
 
-  window.addEventListener('resize',()=>{resize();mk();});
-  resize();mk();
-  requestAnimationFrame(draw);
+  function loop(ts){
+    requestAnimationFrame(loop);
+    if(document.hidden)return; // don't burn CPU on a background tab
+    if(ts-lastFrame<FRAME_MS)return; // frame-rate cap
+    lastFrame=ts;
+    draw();
+  }
+
+  window.addEventListener('resize',()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{resize();mkParticles();},150); // debounce so dragging the window doesn't rebuild the particle arrays dozens of times
+  },{passive:true});
+
+  resize();mkParticles();
+  setInterval(()=>{if(!document.hidden&&Math.random()<0.4)spawnShooter();},2600);
+  requestAnimationFrame(loop);
 })();
 
 /* ══ STAT RANKINGS LOGIC (unchanged) ══ */
@@ -693,60 +740,6 @@ async function init(){
   }
 }
 window.addEventListener("DOMContentLoaded",init);
-
-  /* ══ BRIGHT STARFIELD ══ */
-(function(){
-  const c = document.getElementById('stars-canvas');
-  const ctx = c.getContext('2d');
-  let W, H, stars = [];
-
-  function resize(){
-    W = c.width = window.innerWidth;
-    H = c.height = window.innerHeight;
-  }
-
-  function mkStars(){
-    stars = [];
-    const n = Math.floor(W * H / 1800); // More stars
-    for(let i = 0; i < n; i++){
-      const z = Math.pow(Math.random(), 1.4);
-      stars.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        r: z * 1.8 + 0.3,
-        dx: (Math.random() - 0.5) * 0.08,
-        dy: (Math.random() - 0.5) * 0.05,
-        phase: Math.random() * Math.PI * 2,
-        ts: 0.006 + Math.random() * 0.022,
-      });
-    }
-  }
-
-  function draw(){
-    ctx.clearRect(0, 0, W, H);
-    stars.forEach(s => {
-      s.x += s.dx;
-      s.y += s.dy;
-      if(s.x < 0) s.x = W;
-      if(s.x > W) s.x = 0;
-      if(s.y < 0) s.y = H;
-      if(s.y > H) s.y = 0;
-      s.phase += s.ts;
-      const a = 0.4 + 0.6 * Math.abs(Math.sin(s.phase));
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(240,250,255,${a})`;
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-
-  window.addEventListener('resize', () => { resize(); mkStars(); });
-  resize();
-  mkStars();
-  requestAnimationFrame(draw);
-})();
-  
 </script>
 </body>
 </html>
