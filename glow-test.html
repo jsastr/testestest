@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+  body { background: #020411; margin:0; height:100vh; overflow:hidden; }
+  
+  #mouse-glow{
+    position:fixed;
+    pointer-events:none;
+    z-index:99999;
+    width:900px;
+    height:900px;
+    border-radius:50%;
+    background:radial-gradient(circle, 
+      rgba(140,220,255,0.9) 0%, 
+      rgba(100,180,255,0.75) 40%, 
+      rgba(80,140,255,0.5) 70%, 
+      transparent 100%);
+    transform:translate(-50%,-50%);
+    filter:blur(12px);
+    mix-blend-mode:screen;
+    box-shadow:0 0 120px rgba(140,200,255,0.85);
+    opacity:0;
+  }
+  body.mouse-active #mouse-glow { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="mouse-glow"></div>
+
+<p style="color:white; padding:50px; font-family:sans-serif; position:relative; z-index:10;">
+  Move your mouse. A glowing orb should follow it.
+</p>
+
+<script>
+const g = document.getElementById('mouse-glow');
+let lx = 0, ly = 0, tx = 0, ty = 0;
+
+document.addEventListener('mousemove', e => {
+  tx = e.clientX;
+  ty = e.clientY;
+  document.body.classList.add('mouse-active');
+});
+
+function tick(){
+  lx += (tx - lx) * 0.12;
+  ly += (ty - ly) * 0.12;
+  g.style.left = lx + 'px';
+  g.style.top = ly + 'px';
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+
+</body>
+</html>
