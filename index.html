@@ -80,36 +80,33 @@ body::after{
     radial-gradient(ellipse 30% 28% at 85% 18%,  rgba(80,40,180,0.07), transparent 45%);}
 }
 
+/* ══ MOUSE GLOW — Matching the reference style ══ */
 #mouse-glow{
   position:fixed;
   pointer-events:none;
   z-index:9999;
-  width:1200px;
-  height:1200px;
+  width:800px;
+  height:800px;
   border-radius:50%;
   background:radial-gradient(circle,
-    rgba(255,200,255,0.95) 0%,
-    rgba(220,160,255,0.95) 15%,
-    rgba(180,120,255,0.92) 30%,
-    rgba(160,90,255,0.85) 45%,
-    rgba(140,70,255,0.75) 60%,
-    rgba(120,50,240,0.55) 75%,
-    rgba(100,40,220,0.35) 88%,
+    rgba(120, 200, 255, 0.75) 0%,
+    rgba(100, 160, 255, 0.65) 30%,
+    rgba(80, 120, 255, 0.45) 55%,
+    rgba(60, 90, 255, 0.25) 75%,
     transparent 100%);
   transform:translate(-50%,-50%);
   left:-9999px;
   top:-9999px;
-  filter:blur(6px); /* Less blur = sharper */
+  filter:blur(18px);
   mix-blend-mode:screen;
   opacity:0;
-  transition:opacity .2s ease;
+  transition:opacity .4s ease;
   box-shadow: 
-    0 0 80px rgba(255,220,255,0.9),
-    0 0 160px rgba(180,120,255,0.8),
-    0 0 240px rgba(140,80,255,0.6);
+    0 0 60px rgba(140, 200, 255, 0.8),
+    0 0 140px rgba(100, 160, 255, 0.6);
 }
 body.mouse-active #mouse-glow{
-  opacity:1 !important;
+  opacity: 0.85 !important;
 }
 /* ── BANNER ── */
 .banner{
@@ -713,28 +710,18 @@ body.mouse-active #mouse-glow{
   const g = document.getElementById('mouse-glow');
   if(!g) return;
 
-  let lx = -9999, ly = -9999, tx = -9999, ty = -9999;
-  let active = false;
+  let lx = window.innerWidth/2, ly = window.innerHeight/2;
+  let tx = lx, ty = ly;
 
-  // Make sure it works everywhere
   document.documentElement.addEventListener('mousemove', e => {
     tx = e.clientX;
     ty = e.clientY;
-    
-    if(!active){
-      active = true;
-      document.body.classList.add('mouse-active');
-    }
-  }, true); // Use capture phase
-
-  document.documentElement.addEventListener('mouseleave', () => {
-    active = false;
-    document.body.classList.remove('mouse-active');
+    document.body.classList.add('mouse-active');
   });
 
   function tick(){
-    lx += (tx - lx) * 0.14;   // Slightly faster follow
-    ly += (ty - ly) * 0.14;
+    lx += (tx - lx) * 0.13;
+    ly += (ty - ly) * 0.13;
     g.style.left = lx + 'px';
     g.style.top = ly + 'px';
     requestAnimationFrame(tick);
