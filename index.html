@@ -42,11 +42,15 @@ body{
 @keyframes pageFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
 /* ══ GALAXY CANVAS ══ */
-#stars-canvas{position:fixed;inset:0;z-index:-3;pointer-events:none;width:100%;height:100%;}
+#stars-canvas{position:fixed;inset:0;z-index:-4;pointer-events:none;width:100%;height:100%;}
 
-/* ══ NEBULA BACKDROP ══ */
-body::after{
-  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+/* ══ NEBULA BACKDROP — two static gradient layers cross-fading via opacity ══
+   (previously a single layer animated its `background` property directly,
+   which forces the browser to repaint the whole viewport's gradients every
+   frame; opacity is compositor-only, so this looks the same but is far
+   cheaper to run) */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-3;pointer-events:none;
   background:
     radial-gradient(ellipse 90% 55% at 10% 3%,  rgba(80,35,200,0.32), transparent 58%),
     radial-gradient(ellipse 65% 45% at 88% 8%,  rgba(45,212,160,0.16), transparent 55%),
@@ -54,30 +58,23 @@ body::after{
     radial-gradient(ellipse 42% 38% at 3%  72%,  rgba(120,70,220,0.14),transparent 54%),
     radial-gradient(ellipse 38% 32% at 95% 62%,  rgba(45,212,160,0.10),transparent 50%),
     radial-gradient(ellipse 30% 28% at 70% 30%,  rgba(90,50,180,0.08), transparent 45%);
-  animation:nebulaShift 22s ease-in-out infinite alternate;
 }
-@keyframes nebulaShift{
-  0%{background:
-    radial-gradient(ellipse 90% 55% at 10% 3%,  rgba(80,35,200,0.32), transparent 58%),
-    radial-gradient(ellipse 65% 45% at 88% 8%,  rgba(45,212,160,0.16), transparent 55%),
-    radial-gradient(ellipse 55% 65% at 50% 100%,rgba(55,25,160,0.26), transparent 62%),
-    radial-gradient(ellipse 42% 38% at 3%  72%,  rgba(120,70,220,0.14),transparent 54%),
-    radial-gradient(ellipse 38% 32% at 95% 62%,  rgba(45,212,160,0.10),transparent 50%),
-    radial-gradient(ellipse 30% 28% at 70% 30%,  rgba(90,50,180,0.08), transparent 45%);}
-  40%{background:
-    radial-gradient(ellipse 90% 55% at 78% 5%,  rgba(120,60,220,0.28), transparent 58%),
-    radial-gradient(ellipse 65% 45% at 8%  12%,  rgba(45,212,160,0.18), transparent 55%),
-    radial-gradient(ellipse 55% 65% at 28% 95%,  rgba(70,30,180,0.22), transparent 62%),
-    radial-gradient(ellipse 42% 38% at 92% 68%,  rgba(45,212,160,0.12),transparent 54%),
-    radial-gradient(ellipse 38% 32% at 50% 50%,  rgba(100,55,200,0.09),transparent 50%),
-    radial-gradient(ellipse 30% 28% at 20% 25%,  rgba(140,80,220,0.07),transparent 45%);}
-  100%{background:
+body::after{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
     radial-gradient(ellipse 90% 55% at 42% 1%,  rgba(55,25,180,0.36), transparent 58%),
     radial-gradient(ellipse 65% 45% at 92% 22%,  rgba(120,60,220,0.14), transparent 55%),
     radial-gradient(ellipse 55% 65% at 8%  88%,  rgba(45,212,160,0.14), transparent 62%),
     radial-gradient(ellipse 42% 38% at 68% 78%,  rgba(90,45,200,0.12),transparent 54%),
     radial-gradient(ellipse 38% 32% at 18% 42%,  rgba(45,212,160,0.09),transparent 50%),
-    radial-gradient(ellipse 30% 28% at 85% 18%,  rgba(80,40,180,0.07), transparent 45%);}
+    radial-gradient(ellipse 30% 28% at 85% 18%,  rgba(80,40,180,0.07), transparent 45%);
+  animation:nebulaFade 22s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes nebulaFade{
+  0%{opacity:0;}
+  50%{opacity:.6;}
+  100%{opacity:1;}
 }
   
 /* ── BANNER ── */
@@ -600,6 +597,9 @@ body::after{
   const c=document.getElementById('stars-canvas');
   const ctx=c.getContext('2d');
   let W,H,stars=[],shooters=[];
+  let lastFrame=0;
+  const FRAME_MS=1000/40; // cap redraw rate — background decoration doesn't need 60fps
+  let resizeTimer;
 
   function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
 
@@ -638,7 +638,7 @@ body::after{
     });
   }
 
-  function draw(t){
+  function draw(){
     ctx.clearRect(0,0,W,H);
     // stars
     stars.forEach(s=>{
@@ -668,13 +668,24 @@ body::after{
       ctx.strokeStyle=g;ctx.lineWidth=1.8*s.life;ctx.stroke();ctx.restore();
       s.x+=s.vx;s.y+=s.vy;s.life-=s.decay;
     });
-    requestAnimationFrame(draw);
   }
 
-  window.addEventListener('resize',()=>{resize();mkStars();});
+  function loop(ts){
+    requestAnimationFrame(loop);
+    if(document.hidden)return; // don't burn CPU on a background tab
+    if(ts-lastFrame<FRAME_MS)return; // frame-rate cap
+    lastFrame=ts;
+    draw();
+  }
+
+  window.addEventListener('resize',()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{resize();mkStars();},150); // debounce so dragging the window doesn't rebuild the star array dozens of times
+  },{passive:true});
+
   resize();mkStars();
-  setInterval(()=>{if(Math.random()<0.42)spawnShooter();},2400);
-  requestAnimationFrame(draw);
+  setInterval(()=>{if(!document.hidden&&Math.random()<0.42)spawnShooter();},2400);
+  requestAnimationFrame(loop);
 })();
 
 /* ══ LEADERBOARD LOGIC ══ */
