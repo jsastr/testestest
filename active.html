@@ -134,22 +134,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   100%{transform:skewX(12deg)  translateX(7%); opacity:.45;}
 }
 
-/* ══ MOUSE GLOW — aurora green ══ */
-#mouse-glow{
-  position:fixed;pointer-events:none;z-index:2;
-  width:600px;height:600px;border-radius:50%;
-  background:radial-gradient(circle,
-    rgba(0,255,140,0.13) 0%,
-    rgba(0,200,120,0.08) 28%,
-    rgba(45,212,160,0.035) 56%,
-    transparent 72%);
-  transform:translate(-50%,-50%);
-  left:-9999px;top:-9999px;
-  filter:blur(2px);mix-blend-mode:screen;
-  opacity:0;transition:opacity .45s ease;
-}
-body.mouse-active #mouse-glow{opacity:1;}
-
 /* ── BANNER ── */
 .banner{
   position:relative;z-index:2;
@@ -764,17 +748,6 @@ body.mouse-active #mouse-glow{opacity:1;}
   window.addEventListener('resize',()=>{resize();mkStars();});
   resize();mkStars();
   requestAnimationFrame(draw);
-})();
-
-/* ══ MOUSE GLOW ══ */
-(function(){
-  const g=document.getElementById('mouse-glow');
-  if(!g)return;
-  let lx=-9999,ly=-9999,tx=-9999,ty=-9999,on=false;
-  document.addEventListener('mousemove',e=>{tx=e.clientX;ty=e.clientY;if(!on){on=true;document.body.classList.add('mouse-active');}});
-  document.addEventListener('mouseleave',()=>{on=false;document.body.classList.remove('mouse-active');});
-  function tick(){lx+=(tx-lx)*0.09;ly+=(ty-ly)*0.09;g.style.left=lx+'px';g.style.top=ly+'px';requestAnimationFrame(tick);}
-  tick();
 })();
 
 /* ══ LEADERBOARD LOGIC ══ */
