@@ -79,38 +79,6 @@ body::after{
     radial-gradient(ellipse 38% 32% at 18% 42%,  rgba(45,212,160,0.09),transparent 50%),
     radial-gradient(ellipse 30% 28% at 85% 18%,  rgba(80,40,180,0.07), transparent 45%);}
 }
-
-/* ══ MOUSE GLOW — Matching the reference style ══ */
-#mouse-glow{
-  position:fixed;
-  pointer-events:none;
-  z-index:9999;
-  width:800px;
-  height:800px;
-  border-radius:50%;
-  background:radial-gradient(circle,
-    rgba(120, 200, 255, 0.75) 0%,
-    rgba(100, 160, 255, 0.65) 30%,
-    rgba(80, 120, 255, 0.45) 55%,
-    rgba(60, 90, 255, 0.25) 75%,
-    transparent 100%);
-  transform:translate(-50%,-50%);
-  left:-9999px;
-  top:-9999px;
-  filter:blur(18px);
-  mix-blend-mode:screen;
-  opacity:0;
-  transition:opacity .4s ease;
-  box-shadow: 
-    0 0 60px rgba(140, 200, 255, 0.8),
-    0 0 140px rgba(100, 160, 255, 0.6);
-}
-body.mouse-active #mouse-glow{
-  opacity: 0.85 !important;
-}
-
-  /*---Mouse follow light element ---*/
-<div id="mouse-light"></div>
   
 /* ── BANNER ── */
 .banner{
@@ -707,30 +675,6 @@ body.mouse-active #mouse-glow{
   resize();mkStars();
   setInterval(()=>{if(Math.random()<0.42)spawnShooter();},2400);
   requestAnimationFrame(draw);
-})();
-
-/* ══ MOUSE GLOW TRACKING ══ */
-(function(){
-  const g = document.getElementById('mouse-glow');
-  if(!g) return;
-
-  let lx = window.innerWidth/2, ly = window.innerHeight/2;
-  let tx = lx, ty = ly;
-
-  document.documentElement.addEventListener('mousemove', e => {
-    tx = e.clientX;
-    ty = e.clientY;
-    document.body.classList.add('mouse-active');
-  });
-
-  function tick(){
-    lx += (tx - lx) * 0.13;
-    ly += (ty - ly) * 0.13;
-    g.style.left = lx + 'px';
-    g.style.top = ly + 'px';
-    requestAnimationFrame(tick);
-  }
-  tick();
 })();
 
 /* ══ LEADERBOARD LOGIC ══ */
