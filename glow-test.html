@@ -1,37 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<title>Mouse Glow Test</title>
 <style>
-  body { background: #020411; margin:0; height:100vh; overflow:hidden; }
-  
-  #mouse-glow{
-    position:fixed;
-    pointer-events:none;
-    z-index:99999;
-    width:900px;
-    height:900px;
-    border-radius:50%;
-    background:radial-gradient(circle, 
-      rgba(140,220,255,0.9) 0%, 
-      rgba(100,180,255,0.75) 40%, 
-      rgba(80,140,255,0.5) 70%, 
-      transparent 100%);
-    transform:translate(-50%,-50%);
-    filter:blur(12px);
-    mix-blend-mode:screen;
-    box-shadow:0 0 120px rgba(140,200,255,0.85);
-    opacity:0;
-  }
-  body.mouse-active #mouse-glow { opacity:1; }
+body { 
+  background: #020411; 
+  margin:0; 
+  height:100vh; 
+  overflow:hidden; 
+  color:white; 
+  font-family:sans-serif;
+}
+#mouse-glow{
+  position:fixed;
+  pointer-events:none;
+  z-index:99999;
+  width:1000px;
+  height:1000px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(140,220,255,0.9) 0%, rgba(100,180,255,0.7) 40%, rgba(80,140,255,0.4) 75%, transparent 100%);
+  transform:translate(-50%,-50%);
+  filter:blur(12px);
+  mix-blend-mode:screen;
+  box-shadow:0 0 180px rgba(140,200,255,0.9);
+  opacity:0;
+}
+body.mouse-active #mouse-glow { opacity:1; }
 </style>
 </head>
 <body>
 
 <div id="mouse-glow"></div>
 
-<p style="color:white; padding:50px; font-family:sans-serif; position:relative; z-index:10;">
-  Move your mouse. A glowing orb should follow it.
-</p>
+<h1 style="padding:100px; text-align:center; position:relative; z-index:10;">
+  Move your mouse around<br>
+  <small style="opacity:0.6;">A glowing light should follow it</small>
+</h1>
 
 <script>
 const g = document.getElementById('mouse-glow');
